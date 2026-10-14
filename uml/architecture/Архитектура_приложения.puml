@@ -1,0 +1,78 @@
+@startuml
+title Архитектура приложения «Железная дорога»
+
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 70
+skinparam ranksep 80
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam PackageBorderColor #455468
+skinparam PackageBackgroundColor #F7F9FC
+
+package "railway/frontend\nTypeScript + React" as frontend {
+  package "Feature-модули" {
+    [Identity]
+    [Infrastructure]
+    [Cargo]
+    [Tracking]
+  }
+  [API client]
+}
+
+package "railway/backend\nPython web service" as backend {
+  package "Presentation" {
+    [HTTP API]
+  }
+
+  package "Application" {
+    [Identity use cases]
+    [Infrastructure use cases]
+    [Cargo use cases]
+    [Tracking use cases]
+  }
+
+  package "Domain" {
+    [Identity domain]
+    [Infrastructure domain]
+    [Routing domain]
+    [Cargo domain]
+  }
+
+  package "Infrastructure adapters" {
+    [Database adapters]
+    [Auth adapters]
+  }
+}
+
+database "Database" as db
+
+frontend --> [API client]
+[API client] --> [HTTP API]
+[HTTP API] --> [Identity use cases]
+[HTTP API] --> [Infrastructure use cases]
+[HTTP API] --> [Cargo use cases]
+[HTTP API] --> [Tracking use cases]
+
+[Identity use cases] --> [Identity domain]
+[Infrastructure use cases] --> [Infrastructure domain]
+[Infrastructure use cases] --> [Routing domain]
+[Cargo use cases] --> [Cargo domain]
+[Cargo use cases] --> [Routing domain]
+[Tracking use cases] --> [Cargo domain]
+
+[Database adapters] ..> [Identity use cases] : реализует порты
+[Database adapters] ..> [Infrastructure use cases] : реализует порты
+[Database adapters] ..> [Cargo use cases] : реализует порты
+[Auth adapters] ..> [Identity use cases] : реализует порты
+[Database adapters] --> db
+
+note right of [Cargo domain]
+CargoStatus:
+ожидает приёма -> принят
+на станции -> в пути -> получен
+end note
+
+@enduml

@@ -1,0 +1,81 @@
+@startuml
+title Диаграмма вариантов использования системы «Железная дорога»
+
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 70
+skinparam ranksep 80
+skinparam packageMargin 24
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam ActorBorderColor #172033
+skinparam ActorFontColor #172033
+skinparam UsecaseBorderColor #2F5D8A
+skinparam UsecaseBackgroundColor #FFFFFF
+skinparam PackageBorderColor #455468
+skinparam PackageBackgroundColor #F7F9FC
+
+actor "Администратор" as admin
+actor "Оператор\nна станции" as operator
+actor "Пользователь" as user
+
+rectangle "Система «Железная дорога»" as system {
+  package "Общий доступ" {
+    usecase "Войти в систему" as login
+    usecase "Выйти из системы" as logout
+  }
+
+  package "Управление инфраструктурой" {
+    usecase "Управлять станциями" as stations
+    usecase "Управлять операторами" as operators
+    usecase "Управлять поездами" as trains
+  }
+
+  package "Обработка грузов на станции" {
+    usecase "Принять груз" as receive
+    usecase "Распределить груз\nпо поездам" as distribute
+    usecase "Получить груз" as pickup
+  }
+
+  package "Работа пользователя с грузом" {
+    usecase "Отправить груз" as send
+    usecase "Отследить груз" as track
+  }
+}
+
+' Связи актёров с доступными сценариями.
+admin --> login
+admin --> logout
+admin --> stations
+admin --> operators
+admin --> trains
+
+operator --> login
+operator --> logout
+operator --> receive
+operator --> distribute
+operator --> pickup
+
+user --> login
+user --> logout
+user --> send
+user --> track
+
+' Все защищённые операции требуют входа в систему.
+stations ..> login : <<include>>
+operators ..> login : <<include>>
+trains ..> login : <<include>>
+receive ..> login : <<include>>
+distribute ..> login : <<include>>
+pickup ..> login : <<include>>
+send ..> login : <<include>>
+track ..> login : <<include>>
+
+' Логический порядок основных операций с грузом.
+send -[hidden]right-> receive
+receive -[hidden]right-> distribute
+distribute -[hidden]right-> pickup
+
+@enduml

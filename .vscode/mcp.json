@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "plantuml": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@plantuml/mcp-js@0.2.2"
+      ]
+    }
+  }
+}
