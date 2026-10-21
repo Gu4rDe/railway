@@ -1,0 +1,69 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Organize UML rendered files",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$root='C:\\Users\\GuArDe\\Desktop\\Вуз\\Курсач по ТП\\uml'; $moves=@{ 'Вход_в_систему'='activity-diagram'; 'Отправка_груза'='activity-diagram'; 'Приём_груза'='activity-diagram'; 'Распределение_груза_по_поездам'='activity-diagram'; 'Получение_груза'='activity-diagram'; 'Управление_инфраструктурой'='activity-diagram'; 'Авторизация'='sequence-diagram'; 'Распределение_груза'='sequence-diagram'; 'Отслеживание_груза'='sequence-diagram'; 'Развёртывание_системы'='deployment-diagram'; 'Состояния_груза'='state-diagram' }; foreach ($name in $moves.Keys) { $sourceDir=Join-Path $root ''; $targetDir=Join-Path $root $moves[$name]; foreach ($ext in @('.png','.svg')) { $source=Join-Path $sourceDir ($name+$ext); $target=Join-Path $targetDir ($name+$ext); if (Test-Path $source) { if (Test-Path $target) { $srcHash=(Get-FileHash $source -Algorithm SHA256).Hash; $dstHash=(Get-FileHash $target -Algorithm SHA256).Hash; if ($srcHash -eq $dstHash) { Remove-Item -LiteralPath $source } else { Write-Error ('Different duplicate: '+$source+' and '+$target) } } else { Move-Item -LiteralPath $source -Destination $target } } } }"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Remove root UML duplicates",
+			"type": "shell",
+			"command": "Remove-Item",
+			"args": [
+				"-Force",
+				"uml\\Авторизация.png",
+				"uml\\Вход_в_систему.png",
+				"uml\\Вход_в_систему.svg",
+				"uml\\Отправка_груза.png",
+				"uml\\Отправка_груза.svg",
+				"uml\\Отслеживание_груза.png",
+				"uml\\Получение_груза.png",
+				"uml\\Получение_груза.svg",
+				"uml\\Приём_груза.png",
+				"uml\\Приём_груза.svg",
+				"uml\\Развёртывание_системы.svg",
+				"uml\\Распределение_груза.png",
+				"uml\\Распределение_груза_по_поездам.png",
+				"uml\\Распределение_груза_по_поездам.svg",
+				"uml\\Состояния_груза.png",
+				"uml\\Состояния_груза.svg",
+				"uml\\Управление_инфраструктурой.png",
+				"uml\\Управление_инфраструктурой.svg"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Clean root UML outputs",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/c",
+				"del /q \"uml\\Авторизация.png\" \"uml\\Вход_в_систему.png\" \"uml\\Вход_в_систему.svg\" \"uml\\Отправка_груза.png\" \"uml\\Отправка_груза.svg\" \"uml\\Отслеживание_груза.png\" \"uml\\Получение_груза.png\" \"uml\\Получение_груза.svg\" \"uml\\Приём_груза.png\" \"uml\\Приём_груза.svg\" \"uml\\Развёртывание_системы.svg\" \"uml\\Распределение_груза.png\" \"uml\\Распределение_груза_по_поездам.png\" \"uml\\Распределение_груза_по_поездам.svg\" \"uml\\Состояния_груза.png\" \"uml\\Состояния_груза.svg\" \"uml\\Управление_инфраструктурой.png\" \"uml\\Управление_инфраструктурой.svg\""
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Organize preview outputs",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/c",
+				"del /q \"uml-render-preview\\Авторизация.png\" \"uml-render-preview\\Авторизация.svg\" \"uml-render-preview\\Архитектура_приложения.png\" \"uml-render-preview\\Вход_в_систему.png\" \"uml-render-preview\\Вход_в_систему.svg\" \"uml-render-preview\\Диаграмма_классов.png\" \"uml-render-preview\\Компоненты_системы.png\" \"uml-render-preview\\Компоненты_системы.svg\" \"uml-render-preview\\Отправка_груза.png\" \"uml-render-preview\\Отправка_груза.svg\" \"uml-render-preview\\Отслеживание_груза.png\" \"uml-render-preview\\Отслеживание_груза.svg\" \"uml-render-preview\\Получение_груза.png\" \"uml-render-preview\\Получение_груза.svg\" \"uml-render-preview\\Приём_груза.png\" \"uml-render-preview\\Приём_груза.svg\" \"uml-render-preview\\Развёртывание_системы.png\" \"uml-render-preview\\Развёртывание_системы.svg\" \"uml-render-preview\\Распределение_груза.png\" \"uml-render-preview\\Распределение_груза.svg\" \"uml-render-preview\\Распределение_груза_по_поездам.png\" \"uml-render-preview\\Распределение_груза_по_поездам.svg\" \"uml-render-preview\\Связи_диаграммы_вариантов_использования.png\" \"uml-render-preview\\Связи_диаграммы_вариантов_использования.svg\" \"uml-render-preview\\Состояния_груза.png\" \"uml-render-preview\\Состояния_груза.svg\" \"uml-render-preview\\Управление_инфраструктурой.png\" \"uml-render-preview\\Управление_инфраструктурой.svg\""
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}
