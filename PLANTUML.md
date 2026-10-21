@@ -33,6 +33,25 @@ uml/class-diagram/Диаграмма_классов.png
 uml/use-case-diagram/
 ```
 
+Дополнительные UML-диаграммы находятся в тематических папках:
+
+```text
+uml/activity-diagram/    # потоки деятельности
+uml/state-diagram/       # состояния груза
+uml/sequence-diagram/    # сценарии взаимодействия
+uml/component-diagram/   # компоненты системы
+uml/deployment-diagram/  # физическое развёртывание
+```
+
+Каждый новый исходник `.puml` рендерится в PNG и SVG рядом с исходником.
+Для массовой проверки можно использовать локальный PlantUML JAR:
+
+```powershell
+java -jar ~/.local/share/plantuml/plantuml-1.2026.8.jar `
+  -charset UTF-8 -tsvg -tpng -Playout=smetana `
+  uml/activity-diagram/*.puml
+```
+
 Текстовые материалы находятся в `docs/`:
 
 - `docs/events/` — потоки событий железнодорожной системы;

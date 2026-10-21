@@ -1,94 +1,170 @@
-# Разобранный пример: диаграмма вариантов использования «Железная дорога»
+# Примеры (проверены рендером, PlantUML 1.2025.4)
 
-Содержание: [Ситуация](#ситуация) · [Разбор образца](#разбор-образца) · [Готовый код](#готовый-код) · [Что здесь важно](#что-здесь-важно)
+## Диаграмма вариантов использования «Железная дорога»
 
-## Ситуация
-
-Пользователь прислал образец раскладки (скриншот из редактора) и попросил сделать так же аккуратно. Сначала он просил добавить `<<include>>` от каждого варианта ко входу, потом решил, что `include` лишние, и велел о них забыть. **На диаграмме их нет, и без прямой просьбы добавлять их не нужно.**
-
-## Разбор образца
-
-Так выглядит шаг 1 из раздела «Если пользователь прислал картинку» (выписать всё словами):
-
-- **Слева** блок «Пользователь» с вариантом «Вход в систему».
-- **Актёр «Пользователь»** связан простой ассоциацией со входом. От него обобщение (пустой треугольник у «Пользователя») к трём актёрам.
-- **Актёры сверху вниз:** Оператор станции, Администратор, Клиент.
-- **Справа блоки, названные по актёрам**, с вариантами использования:
-  - «Оператор станции»: получение груза, распределение груза по поездам, приём груза.
-  - «Администратор»: составление списков станций, операторов, поездов, груза.
-  - «Клиент»: слежение за состоянием груза, просмотр состояния заказа, отправка груза, получение груза (клиент).
-- Каждый актёр связан стрелкой со своими вариантами использования.
-- Внешней рамки системы на образце нет.
-
-## Готовый код
-
-Проверен рендером: собирается без ошибок, кириллица отображается корректно, раскладка совпадает с образцом.
+Актёр-родитель «Участник системы» держит вход/выход, без `include`. `left to right direction`, плавные линии (без `linetype`).
 
 ```plantuml
 @startuml
 !theme plain
-skinparam shadowing false
-skinparam dpi 150
-skinparam nodesep 40
-skinparam ranksep 110
-skinparam packageStyle rectangle
+title Диаграмма вариантов использования системы «Железная дорога»
 left to right direction
+skinparam nodesep 50
+skinparam ranksep 70
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam dpi 150
+skinparam defaultFontName DejaVu Sans
 
-rectangle "Пользователь\n\n" as G0 {
-  usecase "Вход в систему" as L
-}
-
-actor "Пользователь" as U
-actor "Оператор\nстанции" as O
+actor "Участник\nсистемы" as U
 actor "Администратор" as A
-actor "Клиент" as C
+actor "Оператор\nна станции" as O
+actor "Пользователь" as P
 
-rectangle "Оператор станции" as G3 {
-  usecase "Получение груза" as O1
-  usecase "Распределение груза\nпо поездам" as O2
-  usecase "Приём груза" as O3
+A -up-|> U
+O -up-|> U
+P -up-|> U
+
+rectangle "Система «Железная дорога»" {
+  rectangle "Общий доступ\n\n" as G0 {
+    usecase "Войти в систему" as L1
+    usecase "Выйти из системы" as L2
+  }
+  rectangle "Управление\nинфраструктурой\n\n" as G1 {
+    usecase "Управлять\nстанциями" as A1
+    usecase "Управлять\nоператорами" as A2
+    usecase "Управлять\nпоездами" as A3
+  }
+  rectangle "Обработка грузов\nна станции\n\n" as G2 {
+    usecase "Принять груз" as O1
+    usecase "Распределить груз\nпо поездам" as O2
+    usecase "Получить груз" as O3
+  }
+  rectangle "Работа пользователя\nс грузом\n\n" as G3 {
+    usecase "Отправить груз" as P1
+    usecase "Отследить груз" as P2
+  }
 }
-rectangle "Администратор" as G1 {
-  usecase "Составление\nсписка станций" as A1
-  usecase "Составление\nсписка операторов" as A2
-  usecase "Составление\nсписка поездов" as A3
-  usecase "Составление\nсписка груза" as A4
-}
-rectangle "Клиент" as G2 {
-  usecase "Слежение за\nсостоянием груза" as C1
-  usecase "Просмотр состояния\nзаказа" as C2
-  usecase "Отправка груза" as C3
-  usecase "Получение груза\n(клиент)" as C4
-}
 
-O -[hidden]right-> A
-A -[hidden]right-> C
-L -- U
-U <|-- O
-U <|-- A
-U <|-- C
-
-O --> O1
-O --> O2
-O --> O3
-A --> A1
-A --> A2
-A --> A3
-A --> A4
-C --> C1
-C --> C2
-C --> C3
-C --> C4
-
+U -down-> L1
+U -down-> L2
+A -down-> A1
+A -down-> A2
+A -down-> A3
+O -down-> O1
+O -down-> O2
+O -down-> O3
+P -down-> P1
+P -down-> P2
 @enduml
 ```
 
-## Что здесь важно
+## Диаграмма классов «Железная дорога»
 
-- **Порядок актёров сверху вниз** (оператор, администратор, клиент) задан строками `O -[hidden]right-> A` и `A -[hidden]right-> C`. В режиме `left to right direction` PlantUML поворачивает направления: `-[hidden]down->` и `-[hidden]up->` порядок **не** задают (актёры меняются местами), а `-[hidden]right->` задаёт вертикальный порядок.
-- **Порядок объявления сам по себе не помогает.** Проверено на всех 6 перестановках объявления актёров, групп и связей: ни одна не дала нужный порядок.
-- **Невидимые связи между самими блоками групп не нужны**, они дали «лесенку» и ухудшили раскладку.
-- `L -- U` (без стрелки) ставит «Вход в систему» левее актёра «Пользователь», а `U <|-- O` ставит «Пользователь» левее потомков. **Сторона элемента определяется порядком записи связи**, а не направлением стрелки.
-- Блок «Пользователь» с одним вариантом получает заголовок с двумя переводами строки (`"Пользователь\n\n"`), иначе заголовок налезает на овал.
-- `skinparam linetype ortho` для такой диаграммы не нужен: обычные изогнутые линии читаются лучше.
-- Если нужна рамка «Система «Железная дорога»», оберни в `rectangle "Система «Железная дорога»" { ... }` только блоки с вариантами использования, без актёров.
+Иерархия сверху, `Station` в центре, направления заданы вручную, без пакетов, enum сбоку.
+
+```plantuml
+@startuml
+!theme plain
+title Диаграмма классов системы «Железная дорога»
+skinparam nodesep 70
+skinparam ranksep 80
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam dpi 150
+skinparam defaultFontName DejaVu Sans
+hide empty members
+
+abstract class User {
+  -identifier : String
+  -password : String
+  -name : String
+  +login(identifier, password) : boolean
+  +logout() : void
+}
+
+class Administrator {
+  +addStation(station) : void
+  +removeStation(station) : void
+  +addOperator(operator) : void
+  +removeOperator(operator) : void
+  +addTrain(train) : void
+  +removeTrain(train) : void
+}
+
+class Operator {
+  +receiveCargo(cargo) : void
+  +assignCargo(cargo, train) : void
+  +collectCargo(cargoId) : void
+}
+
+class Station {
+  -code : String
+  -name : String
+  +addOperator(operator) : void
+  +removeOperator(operator) : void
+}
+
+class Train {
+  -number : String
+  -status : TrainStatus
+  +goesTo(station) : boolean
+  +addStation(station) : void
+}
+
+class Route {
+  +contains(station) : boolean
+  +nextStation(station) : Station
+}
+
+class Cargo {
+  -identifier : String
+  -description : String
+  -weight : Decimal
+  -status : CargoStatus
+  +accept() : void
+  +dispatch(train) : void
+  +collect() : void
+}
+
+enum TrainStatus {
+  READY
+  IN_TRANSIT
+  ARRIVED
+}
+
+enum CargoStatus {
+  AWAITING_ACCEPTANCE
+  ACCEPTED_AT_STATION
+  IN_TRANSIT
+  COLLECTED
+}
+
+' --- иерархия пользователей
+Administrator -up-|> User
+Operator -up-|> User
+
+' --- Administrator управляет
+Administrator -right..> Operator : управляет
+Administrator -down..> Station : управляет
+Administrator ..> Train : управляет
+
+' --- Operator
+Operator -down..> Cargo : обрабатывает
+Station "1" o-up- "0..*" Operator : нанимает
+
+' --- груз
+User "1" -- "0..*" Cargo : отправитель
+Cargo "0..*" -left-> "1" Station : станция отправления
+Cargo "0..*" -left-> "1" Station : станция назначения
+Cargo "0..*" -down-> "0..1" Train : назначен на
+
+' --- поезд и маршрут
+Train "1" *-left- "1" Route : имеет
+Route "1" o-up- "2..*" Station : проходит через
+
+' --- перечисления
+Cargo -right..> CargoStatus
+Train -right..> TrainStatus
+@enduml
+```

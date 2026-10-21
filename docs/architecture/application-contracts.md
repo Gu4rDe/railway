@@ -128,6 +128,7 @@ Routing владеет правилами прохождения маршрут�
 
 | Use case | Вход | Результат |
 | --- | --- | --- |
+| `ListStationCargo` | `ListStationCargoQuery(station_id, status?)` | `list[CargoSummaryDto]` |
 | `AcceptCargo` | `AcceptCargoCommand(cargo_id, station_id)` | `CargoDto` |
 | `AssignCargoToTrain` | `AssignCargoCommand(cargo_id, train_id)` | `CargoDto` |
 | `CollectCargo` | `CollectCargoCommand(cargo_id, station_id)` | `CargoDto` |
@@ -157,7 +158,23 @@ CargoTrackingDto:
   status
   current_station_id: optional
   assigned_train_id: optional
+
+CargoSummaryDto:
+  cargo_id
+  description
+  weight
+  status
+  origin_station_id
+  destination_station_id
+  current_station_id: optional
+  assigned_train_id: optional
 ```
+
+`ListStationCargo` возвращает оператору только грузы, доступные в контексте
+его станции. Параметр `status` позволяет отфильтровать рабочий список,
+например показать только грузы со статусом `accepted_at_station` перед
+распределением. Пользователь не получает этот список и отслеживает конкретный
+груз через `TrackCargo`.
 
 Переходы статуса ограничены domain-правилами:
 
