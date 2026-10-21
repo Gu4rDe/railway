@@ -1,0 +1,21 @@
+@startuml
+title Диаграмма состояний груза
+skinparam shadowing false
+skinparam dpi 150
+skinparam roundcorner 12
+hide empty description
+
+state "Ожидает приёма" as Awaiting
+state "Принят на станции" as Accepted
+state "В пути" as InTransit
+state "Получен" as Collected
+
+[*] --> Awaiting : создана заявка
+Awaiting --> Accepted : оператор принял груз
+Awaiting --> Awaiting : ошибка данных / повторить
+Accepted --> InTransit : назначен поезд
+Accepted --> Accepted : поезд не найден / ожидание
+InTransit --> Collected : поезд прибыл и груз выдан
+InTransit --> InTransit : поезд ещё не прибыл / ожидание
+Collected --> [*]
+@enduml

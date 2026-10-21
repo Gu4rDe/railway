@@ -1,0 +1,28 @@
+@startuml
+title Последовательность: приём груза
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Оператор станции" as Operator
+participant "Веб-клиент" as Client
+participant "HTTP API" as API
+participant "Cargo use cases" as Cargo
+database "База данных" as DB
+
+Operator -> Client : Ввести идентификатор и данные груза
+Client -> API : AcceptCargoCommand
+API -> Cargo : Принять груз
+Cargo -> DB : Найти пользователя и груз
+DB --> Cargo : Данные отправления
+alt данные корректны
+  Cargo -> DB : Сохранить статус accepted_at_station
+  Cargo --> API : CargoDto
+  API --> Client : Подтверждение приёма
+else ошибка данных
+  Cargo --> API : ValidationError
+  API --> Client : Показать ошибку
+end
+Client --> Operator : Результат операции
+@enduml

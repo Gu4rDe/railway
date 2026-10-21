@@ -1,0 +1,22 @@
+@startuml
+title Деятельность: вход в систему
+skinparam shadowing false
+skinparam dpi 150
+skinparam ActivityBackgroundColor #FFFFFF
+
+|Пользователь|
+start
+:Открыть форму входа;
+:Ввести идентификатор и пароль;
+|Система|
+:Проверить данные;
+if (Данные корректны?) then (да)
+  :Определить роль;
+  :Открыть доступ;
+else (нет)
+  :Показать ошибку;
+  |Пользователь|
+  :Повторить ввод или выйти;
+endif
+stop
+@enduml

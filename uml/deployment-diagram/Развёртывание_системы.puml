@@ -1,0 +1,31 @@
+@startuml
+title Диаграмма развёртывания системы «Железная дорога»
+skinparam shadowing false
+skinparam dpi 150
+skinparam linetype ortho
+skinparam nodesep 70
+skinparam ranksep 80
+
+node "Устройство пользователя" as UserDevice {
+  artifact "Веб-браузер" as Browser
+  artifact "Frontend\nTypeScript + React" as Frontend
+}
+
+node "Сервер приложений" as AppServer {
+  artifact "HTTP API" as Api
+  artifact "Application use cases" as Application
+  artifact "Domain model" as Domain
+  artifact "Infrastructure adapters" as Adapters
+}
+
+node "Сервер базы данных" as DbServer {
+  database "Database" as DB
+}
+
+Browser --> Frontend : загрузка приложения
+Frontend --> Api : HTTPS / JSON
+Api --> Application : команды и запросы
+Application --> Domain : бизнес-правила
+Adapters --> DB : SQL
+Application --> Adapters : application ports
+@enduml

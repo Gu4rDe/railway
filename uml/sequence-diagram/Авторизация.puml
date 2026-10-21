@@ -1,0 +1,30 @@
+@startuml
+title Последовательность: авторизация
+skinparam shadowing false
+skinparam dpi 150
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam maxMessageSize 150
+autonumber
+
+actor "Пользователь" as User
+participant "Веб-клиент" as Client
+participant "HTTP API" as API
+participant "Identity" as Identity
+database "База данных" as DB
+
+User -> Client : Ввести идентификатор и пароль
+Client -> API : LoginCommand
+API -> Identity : Проверить учётные данные
+Identity -> DB : Найти пользователя
+DB --> Identity : Данные пользователя
+alt данные корректны
+  Identity --> API : AuthSessionDto
+  API --> Client : Сессия и роль
+  Client --> User : Открыть доступ
+else данные неверны
+  Identity --> API : Unauthorized
+  API --> Client : Ошибка авторизации
+  Client --> User : Показать ошибку
+end
+@enduml

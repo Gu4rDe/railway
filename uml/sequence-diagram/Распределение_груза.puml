@@ -1,0 +1,37 @@
+@startuml
+title Последовательность: распределение груза по поезду
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Оператор станции" as Operator
+participant "Веб-клиент" as Client
+participant "HTTP API" as API
+participant "Cargo use cases" as Cargo
+participant "Routing" as Routing
+participant "Infrastructure" as Infrastructure
+database "База данных" as DB
+
+Operator -> Client : Открыть список грузов станции
+Client -> API : ListStationCargoQuery
+API -> Cargo : Получить список грузов
+Cargo -> DB : Найти грузы станции
+DB --> Cargo : Список грузов
+Cargo --> API : CargoSummaryDto[]
+API --> Client : Показать список грузов
+Operator -> Client : Выбрать принятый груз
+Client -> API : Запрос доступных поездов
+API -> Routing : FindTrainsToStation
+Routing -> Infrastructure : Найти доступные поезда
+Infrastructure --> Routing : Список поездов
+Routing --> API : Список поездов
+API --> Client : Показать поезда
+Operator -> Client : Выбрать поезд
+Client -> API : AssignCargoCommand
+API -> Cargo : Назначить поезд
+Cargo -> DB : Сохранить поезд и статус in_transit
+DB --> Cargo : CargoDto
+Cargo --> API : CargoDto
+API --> Client : Подтверждение
+@enduml

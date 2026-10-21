@@ -34,6 +34,7 @@ rectangle "Система «Железная дорога»" as system {
   }
 
   package "Обработка грузов на станции" {
+    usecase "Просмотреть список\nгрузов станции" as listCargo
     usecase "Принять груз" as receive
     usecase "Распределить груз\nпо поездам" as distribute
     usecase "Получить груз" as pickup
@@ -54,6 +55,7 @@ admin --> trains
 
 operator --> login
 operator --> logout
+operator --> listCargo
 operator --> receive
 operator --> distribute
 operator --> pickup
@@ -63,19 +65,21 @@ user --> logout
 user --> send
 user --> track
 
-' Все защищённые операции требуют входа в систему.
-stations ..> login : <<include>>
-operators ..> login : <<include>>
-trains ..> login : <<include>>
-receive ..> login : <<include>>
-distribute ..> login : <<include>>
-pickup ..> login : <<include>>
-send ..> login : <<include>>
-track ..> login : <<include>>
-
 ' Логический порядок основных операций с грузом.
 send -[hidden]right-> receive
 receive -[hidden]right-> distribute
 distribute -[hidden]right-> pickup
+listCargo -[hidden]right-> receive
+
+' Сохраняем исходную раскладку без отображения удалённых связей.
+stations -[hidden]..> login
+operators -[hidden]..> login
+trains -[hidden]..> login
+receive -[hidden]..> login
+distribute -[hidden]..> login
+pickup -[hidden]..> login
+listCargo -[hidden]..> login
+send -[hidden]..> login
+track -[hidden]..> login
 
 @enduml

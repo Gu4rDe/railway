@@ -1,0 +1,25 @@
+@startuml
+title Последовательность: отправка груза
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Пользователь" as User
+participant "Веб-клиент" as Client
+participant "HTTP API" as API
+participant "Cargo use cases" as Cargo
+participant "Routing" as Routing
+database "База данных" as DB
+
+User -> Client : Ввести данные груза и станции
+Client -> API : CreateCargoCommand
+API -> Cargo : Создать отправление
+Cargo -> Routing : Проверить маршрут
+Routing --> Cargo : Маршрут доступен
+Cargo -> DB : Сохранить Cargo
+DB --> Cargo : cargo_id
+Cargo --> API : CargoDto
+API --> Client : Идентификатор и статус
+Client --> User : Показать подтверждение
+@enduml

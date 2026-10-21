@@ -1,0 +1,32 @@
+@startuml
+title Последовательность: получение груза
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Оператор станции" as Operator
+participant "Веб-клиент" as Client
+participant "HTTP API" as API
+participant "Cargo use cases" as Cargo
+participant "Routing" as Routing
+database "База данных" as DB
+
+Operator -> Client : Ввести идентификатор прибывшего груза
+Client -> API : CollectCargoCommand
+API -> Cargo : Получить груз
+Cargo -> DB : Найти груз и поезд
+DB --> Cargo : Данные отправления
+Cargo -> Routing : Проверить прибытие поезда
+alt поезд прибыл
+  Routing --> Cargo : Прибыл
+  Cargo -> DB : Сохранить статус collected
+  Cargo --> API : CargoDto
+  API --> Client : Подтверждение выдачи
+else поезд не прибыл
+  Routing --> Cargo : Ещё в пути
+  Cargo --> API : ValidationError
+  API --> Client : Показать ошибку
+end
+Client --> Operator : Результат операции
+@enduml

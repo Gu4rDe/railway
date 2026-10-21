@@ -1,0 +1,57 @@
+@startuml
+title Диаграмма компонентов системы «Железная дорога»
+skinparam linetype ortho
+skinparam shadowing false
+skinparam dpi 150
+skinparam componentStyle uml2
+skinparam nodesep 60
+skinparam ranksep 70
+left to right direction
+
+package "Frontend\nTypeScript + React" {
+  [Feature-модули] as Features
+  [API client] as ApiClient
+}
+
+package "Presentation" {
+  [HTTP API] as HttpApi
+}
+
+package "Application" {
+  [Identity use cases] as IdentityApp
+  [Infrastructure use cases] as InfrastructureApp
+  [Cargo use cases] as CargoApp
+  [Routing ports] as RoutingPorts
+}
+
+package "Domain" {
+  [Identity domain] as IdentityDomain
+  [Infrastructure domain] as InfrastructureDomain
+  [Routing domain] as RoutingDomain
+  [Cargo domain] as CargoDomain
+}
+
+package "Infrastructure adapters" {
+  [Database adapters] as DatabaseAdapters
+  [Auth adapters] as AuthAdapters
+}
+
+database "Database" as DB
+
+Features --> ApiClient : API contracts
+ApiClient --> HttpApi : HTTPS
+HttpApi --> IdentityApp
+HttpApi --> InfrastructureApp
+HttpApi --> CargoApp
+IdentityApp --> IdentityDomain
+InfrastructureApp --> InfrastructureDomain
+InfrastructureApp --> RoutingPorts
+CargoApp --> CargoDomain
+CargoApp --> RoutingPorts
+RoutingPorts --> RoutingDomain
+DatabaseAdapters ..> IdentityApp : реализует порты
+DatabaseAdapters ..> InfrastructureApp : реализует порты
+DatabaseAdapters ..> CargoApp : реализует порты
+AuthAdapters ..> IdentityApp : реализует порты
+DatabaseAdapters --> DB
+@enduml

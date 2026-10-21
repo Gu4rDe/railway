@@ -1,0 +1,28 @@
+@startuml
+title Последовательность: отслеживание груза
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Пользователь" as User
+participant "Веб-клиент" as Client
+participant "HTTP API" as API
+participant "Cargo use cases" as Cargo
+database "База данных" as DB
+
+User -> Client : Ввести идентификатор груза
+Client -> API : TrackCargoQuery
+API -> Cargo : Отследить груз
+Cargo -> DB : Найти Cargo
+alt груз найден
+  DB --> Cargo : CargoTrackingDto
+  Cargo --> API : Статус и станция
+  API --> Client : CargoTrackingDto
+  Client --> User : Показать состояние
+else груз не найден
+  DB --> Cargo : NotFound
+  Cargo --> API : NotFound
+  API --> Client : Показать ошибку
+end
+@enduml
