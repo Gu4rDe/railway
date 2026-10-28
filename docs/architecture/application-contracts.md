@@ -13,16 +13,19 @@ web-фреймворка, ORM и СУБД. Контракты описывают
 - DTO не являются ORM-моделями и не передаются напрямую в domain.
 - Ошибки бизнес-правил возвращаются как типизированные application-ошибки:
   `NotFound`, `ValidationError`, `Conflict`, `Forbidden`, `Unauthorized`.
+- Application получает актёра из подтверждённой сессии. Для оператора
+  `station_id` всегда берётся из `CurrentUser`, а не доверяется входному DTO.
 
 ## Контекст identity
 
 ### Use cases
 
-| Use case | Вход | Результат |
-| --- | --- | --- |
-| `Login` | `LoginCommand(identifier, password)` | `AuthSessionDto` |
-| `Logout` | `LogoutCommand(session_id)` | `None` |
-| `GetCurrentUser` | `session_id` | `CurrentUserDto` |
+| Use case | Вход | Результат | Доступ |
+| --- | --- | --- | --- |
+| `Login` | `LoginCommand(identifier, password)` | `AuthSessionDto` | все роли |
+| `Logout` | `LogoutCommand(session_id)` | `None` | текущая сессия |
+| `GetCurrentUser` | `session_id` | `CurrentUserDto` | текущая сессия |
+| `CreateUser` | `CreateUserCommand(name)` | `UserCredentialsDto` | администратор |
 
 ### DTO
 
@@ -39,27 +42,35 @@ CurrentUserDto:
   name
   role
   station_id: optional
+
+UserCredentialsDto:
+  user_id
+  identifier
+  temporary_password
 ```
 
+Администратор создаёт учётную запись пользователя; система генерирует
+идентификатор и временный пароль, которые показываются администратору один раз.
 Identity выдаёт application-контекстам только подтверждённую роль и
 идентификатор пользователя. Модули не читают пароль и внутреннюю сессию
 напрямую.
 
 ## Контекст infrastructure
 
-### Use cases администратора
+### Use cases
 
-| Use case | Вход | Результат |
-| --- | --- | --- |
-| `CreateStation` | `CreateStationCommand(code, name)` | `StationDto` |
-| `DeleteStation` | `DeleteStationCommand(station_id)` | `None` |
-| `ListStations` | `ListStationsQuery()` | `list[StationDto]` |
-| `CreateOperator` | `CreateOperatorCommand(station_id, name)` | `OperatorCredentialsDto` |
-| `DeleteOperator` | `DeleteOperatorCommand(operator_id)` | `None` |
-| `ListOperators` | `ListOperatorsQuery()` | `list[OperatorDto]` |
-| `CreateTrain` | `CreateTrainCommand(number, route_id)` | `TrainDto` |
-| `DeleteTrain` | `DeleteTrainCommand(train_id)` | `None` |
-| `ListTrains` | `ListTrainsQuery()` | `list[TrainDto]` |
+| Use case | Вход | Результат | Доступ |
+| --- | --- | --- | --- |
+| `CreateStation` | `CreateStationCommand(code, name)` | `StationDto` | администратор |
+| `DeleteStation` | `DeleteStationCommand(station_id)` | `None` | администратор |
+| `ListStations` | `ListStationsQuery()` | `list[StationDto]` | все роли |
+| `CreateOperator` | `CreateOperatorCommand(station_id, name)` | `OperatorCredentialsDto` | администратор |
+| `DeleteOperator` | `DeleteOperatorCommand(operator_id)` | `None` | администратор |
+| `ListOperators` | `ListOperatorsQuery()` | `list[OperatorDto]` | администратор |
+| `CreateTrain` | `CreateTrainCommand(number, origin_station_id, destination_station_id)` | `TrainDto` | администратор |
+| `DeleteTrain` | `DeleteTrainCommand(train_id)` | `None` | администратор |
+| `ListTrains` | `ListTrainsQuery()` | `list[TrainDto]` | администратор |
+| `RegisterTrainArrival` | `RegisterTrainArrivalCommand(train_id)` | `TrainDto` | оператор своей станции |
 
 ### DTO
 
@@ -83,61 +94,56 @@ OperatorCredentialsDto:
 TrainDto:
   train_id
   number
-  route_id
+  origin_station_id
+  destination_station_id
   status: ready | in_transit | arrived
 ```
 
-Операции создания и удаления проверяют права администратора. Удаление станции
-или поезда должно учитывать активные маршруты и грузы; точная политика
-удаления фиксируется в domain-правилах, а не в HTTP-обработчике.
+Поезд обслуживает прямое направление между начальной и конечной станциями;
+промежуточные станции и пересадки в текущей модели не поддерживаются.
+Создание и удаление проверяют права администратора. Регистрация прибытия
+проверяет, что конечная станция поезда совпадает со станцией текущего оператора.
+Удаление станции или поезда учитывает связанные грузы; ограничения фиксируются
+в domain-правилах.
 
 ## Контекст routing
 
-Routing не является самостоятельным пользовательским разделом в текущем
-use-case-потоке. Он предоставляет application-порты для инфраструктуры и
-грузов.
-
-### Запросы
+Routing предоставляет application-порты для проверки прямого сообщения и
+поиска поездов. Отдельных пользовательских операций управления маршрутами нет.
 
 | Запрос | Вход | Результат |
 | --- | --- | --- |
-| `GetRoute` | `route_id` | `RouteDto` |
-| `FindTrainsToStation` | `destination_station_id` | `list[TrainDto]` |
+| `FindTrainsBetweenStations` | `origin_station_id, destination_station_id` | `list[TrainDto]` |
 | `CanTravel` | `origin_station_id, destination_station_id` | `bool` |
 
-```text
-RouteDto:
-  route_id
-  station_ids: list[station_id]
-```
-
-Routing владеет правилами прохождения маршрута и не знает о пользовательском
-интерфейсе. `cargo` обращается к нему через порт поиска поездов и проверки
-доступности направления.
+`CanTravel` возвращает `true`, если существует поезд по прямому направлению.
+`FindTrainsBetweenStations` возвращает поезда, проходящие ровно между указанными
+начальной и конечной станциями и доступные для назначения.
 
 ## Контекст cargo
 
-### Use cases пользователя
+### Use cases пользователя или получателя
 
-| Use case | Вход | Результат |
-| --- | --- | --- |
-| `CreateCargoShipment` | `CreateCargoCommand(...)` | `CargoDto` |
-| `TrackCargo` | `TrackCargoQuery(cargo_id)` | `CargoTrackingDto` |
+| Use case | Вход | Результат | Доступ |
+| --- | --- | --- | --- |
+| `CreateCargoShipment` | `CreateCargoCommand(...)` | `CargoDto` | пользователь |
+| `TrackCargo` | `TrackCargoQuery(cargo_id)` | `CargoTrackingDto` | отправитель или получатель |
+| `ConfirmCargoPickup` | `ConfirmCargoPickupCommand(cargo_id)` | `CargoDto` | назначенный получатель |
 
 ### Use cases оператора
 
-| Use case | Вход | Результат |
-| --- | --- | --- |
-| `ListStationCargo` | `ListStationCargoQuery(station_id, status?)` | `list[CargoSummaryDto]` |
-| `AcceptCargo` | `AcceptCargoCommand(cargo_id, station_id)` | `CargoDto` |
-| `AssignCargoToTrain` | `AssignCargoCommand(cargo_id, train_id)` | `CargoDto` |
-| `CollectCargo` | `CollectCargoCommand(cargo_id, station_id)` | `CargoDto` |
+| Use case | Вход | Результат | Доступ |
+| --- | --- | --- | --- |
+| `ListStationCargo` | `ListStationCargoQuery(status?)` | `list[CargoSummaryDto]` | оператор своей станции |
+| `AcceptCargo` | `AcceptCargoCommand(cargo_id)` | `CargoDto` | оператор станции отправления |
+| `AssignCargoToTrain` | `AssignCargoCommand(cargo_id, train_id)` | `CargoDto` | оператор станции отправления |
+| `UnloadCargo` | `UnloadCargoCommand(cargo_id)` | `CargoDto` | оператор станции назначения |
 
 ### DTO
 
 ```text
 CreateCargoCommand:
-  sender_id
+  recipient_id
   description
   weight
   origin_station_id
@@ -146,12 +152,14 @@ CreateCargoCommand:
 CargoDto:
   cargo_id
   sender_id
+  recipient_id
   description
   weight
   origin_station_id
   destination_station_id
   assigned_train_id: optional
-  status: awaiting_acceptance | accepted_at_station | in_transit | collected
+  status: awaiting_acceptance | accepted_at_station | in_transit |
+          available_for_pickup | collected
 
 CargoTrackingDto:
   cargo_id
@@ -170,23 +178,26 @@ CargoSummaryDto:
   assigned_train_id: optional
 ```
 
-`ListStationCargo` возвращает оператору только грузы, доступные в контексте
-его станции. Параметр `status` позволяет отфильтровать рабочий список,
-например показать только грузы со статусом `accepted_at_station` перед
-распределением. Пользователь не получает этот список и отслеживает конкретный
-груз через `TrackCargo`.
+Создание отправления создаёт груз со статусом `awaiting_acceptance`. Оператор
+принимает этот же груз по `cargo_id`; он не создаёт дубликат и не вводит повторно
+данные отправителя. `ListStationCargo` выводит только грузы станции оператора;
+параметр `status` фильтрует этот список. `TrackCargo` возвращает результат
+только отправителю или получателю груза. Получатель подтверждает выдачу только
+для назначенного ему груза.
 
 Переходы статуса ограничены domain-правилами:
 
 ```text
-awaiting_acceptance -> accepted_at_station -> in_transit -> collected
+awaiting_acceptance -> accepted_at_station -> in_transit
+                   -> available_for_pickup -> collected
 ```
 
-При отправке груза cargo проверяет через routing, что станции различаются и
-между ними существует маршрут. При распределении cargo запрашивает у routing
-поезда до станции назначения и проверяет через infrastructure, что выбранный
-поезд существует и доступен. При получении cargo проверяет, что груз находится
-в статусе `in_transit`, поезд прибыл, а оператор работает на станции получения.
+При отправке cargo проверяет через routing, что станции различаются и между
+ними есть прямое сообщение. При распределении cargo проверяет, что выбранный
+поезд соответствует начальной и конечной станциям груза, а оператор работает
+на станции отправления. Оператор регистрирует прибытие поезда в infrastructure;
+затем `UnloadCargo` проверяет статус `arrived`, конечную станцию и переводит
+груз в `available_for_pickup`. `ConfirmCargoPickup` переводит груз в `collected`.
 
 ## Порты application-слоя
 
@@ -217,17 +228,13 @@ OperatorRepository
 TrainRepository
   get_by_id(train_id)
   list()
-  list_available_to(destination_station_id)
+  list_available_between(origin_station_id, destination_station_id)
   save(train)
   delete(train_id)
 
-RouteRepository
-  get_by_id(route_id)
-  exists_between(origin_station_id, destination_station_id)
-
 CargoRepository
   get_by_id(cargo_id)
-  list_by_sender(sender_id)
+  list_by_station(station_id, status?)
   save(cargo)
 ```
 
@@ -246,6 +253,7 @@ SessionStore
 CurrentUser
   require_authenticated()
   require_role(role)
+  require_station_operator()
 ```
 
 ### Внешние границы
@@ -259,12 +267,17 @@ TransactionManager
 IdGenerator
   new_id()
 
+CredentialGenerator
+  new_identifier()
+  new_temporary_password()
+
 Clock
   now()
 ```
 
 `TransactionManager` нужен для операций, изменяющих несколько агрегатов или
-репозиториев: приём груза, назначение на поезд и получение груза.
+репозиториев: приёма груза, назначения поезда, регистрации прибытия с обновлением
+грузов, выгрузки и выдачи получателю.
 
 ## Связи между модулями
 
@@ -274,20 +287,21 @@ identity
 
 infrastructure
   ├── владеет Station, Operator и Train
-  └── предоставляет проверку существования и доступности поездов
+  ├── управляет прямыми направлениями поездов
+  └── регистрирует прибытие поезда оператором конечной станции
 
 routing
-  ├── владеет Route
-  └── использует read-порт TrainRepository для поиска поездов
+  └── использует read-порт TrainRepository для проверки прямых направлений
 
 cargo
   ├── владеет Cargo и переходами CargoStatus
-  ├── использует identity для проверки отправителя и роли оператора
+  ├── использует identity для проверки отправителя, получателя и роли оператора
   ├── использует infrastructure для станций, поездов и привязки оператора
-  └── использует routing для проверки маршрутов и поиска поездов
+  └── использует routing для проверки прямых направлений и поиска поездов
 ```
 
-Прямой импорт ORM-моделей между модулями запрещён. Если cargo нужен объект из
-другого контекста, он получает его через порт, идентификатор или небольшой
-DTO. Это сохраняет возможность заменить БД и HTTP-слой без изменения доменных
-правил.
+Отслеживание остаётся отдельной frontend-функцией, но backend use case
+`TrackCargo` принадлежит контексту cargo. Прямой импорт ORM-моделей между
+модулями запрещён. Если cargo нужен объект из другого контекста, он получает
+его через порт, идентификатор или небольшой DTO. Это сохраняет возможность
+заменить БД и HTTP-слой без изменения доменных правил.
