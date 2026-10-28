@@ -9,6 +9,7 @@ actor "Пользователь" as User
 participant "Веб-клиент" as Client
 participant "HTTP API" as API
 participant "Cargo use cases" as Cargo
+participant "Identity" as Identity
 database "База данных" as DB
 
 User -> Client : Ввести идентификатор груза
@@ -17,9 +18,17 @@ API -> Cargo : Отследить груз
 Cargo -> DB : Найти Cargo
 alt груз найден
   DB --> Cargo : CargoTrackingDto
+  Cargo -> Identity : Проверить sender_id или recipient_id
+  alt актёр связан с грузом
+    Identity --> Cargo : Доступ разрешён
   Cargo --> API : Статус и станция
   API --> Client : CargoTrackingDto
   Client --> User : Показать состояние
+  else чужой груз
+    Identity --> Cargo : Forbidden
+    Cargo --> API : NotFound / Forbidden
+    API --> Client : Показать ошибку
+  end
 else груз не найден
   DB --> Cargo : NotFound
   Cargo --> API : NotFound

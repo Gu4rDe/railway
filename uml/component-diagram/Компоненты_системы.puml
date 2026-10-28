@@ -9,7 +9,10 @@ skinparam ranksep 70
 left to right direction
 
 package "Frontend\nTypeScript + React" {
-  [Feature-модули] as Features
+  [Identity] as IdentityFeature
+  [Infrastructure] as InfrastructureFeature
+  [Cargo] as CargoFeature
+  [Tracking] as TrackingFeature
   [API client] as ApiClient
 }
 
@@ -38,7 +41,10 @@ package "Infrastructure adapters" {
 
 database "Database" as DB
 
-Features --> ApiClient : API contracts
+IdentityFeature --> ApiClient : API contracts
+InfrastructureFeature --> ApiClient : API contracts
+CargoFeature --> ApiClient : API contracts
+TrackingFeature --> ApiClient : API contracts
 ApiClient --> HttpApi : HTTPS
 HttpApi --> IdentityApp
 HttpApi --> InfrastructureApp
@@ -54,4 +60,9 @@ DatabaseAdapters ..> InfrastructureApp : реализует порты
 DatabaseAdapters ..> CargoApp : реализует порты
 AuthAdapters ..> IdentityApp : реализует порты
 DatabaseAdapters --> DB
+
+note right of CargoApp
+Includes shipment, station cargo operations,
+tracking, unloading and pickup confirmation.
+end note
 @enduml

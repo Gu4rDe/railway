@@ -13,19 +13,23 @@ participant "Routing" as Routing
 participant "Infrastructure" as Infrastructure
 database "База данных" as DB
 
-Operator -> Client : Открыть список грузов станции
+Operator -> Client : Открыть список грузов своей станции
 Client -> API : ListStationCargoQuery
 API -> Cargo : Получить список грузов
-Cargo -> DB : Найти грузы станции
+Cargo -> Identity : Получить station_id оператора
+Identity --> Cargo : station_id
+Cargo -> DB : Найти грузы станции и фильтровать статус
 DB --> Cargo : Список грузов
 Cargo --> API : CargoSummaryDto[]
 API --> Client : Показать список грузов
 Operator -> Client : Выбрать принятый груз
-Client -> API : Запрос доступных поездов
-API -> Routing : FindTrainsToStation
-Routing -> Infrastructure : Найти доступные поезда
+Client -> API : Запрос поездов до назначения
+API -> Cargo : Проверить груз и станцию оператора
+Cargo -> Routing : FindTrainsBetweenStations(origin, destination)
+Routing -> Infrastructure : Найти прямые доступные поезда
 Infrastructure --> Routing : Список поездов
-Routing --> API : Список поездов
+Routing --> Cargo : Список поездов
+Cargo --> API : Список поездов
 API --> Client : Показать поезда
 Operator -> Client : Выбрать поезд
 Client -> API : AssignCargoCommand

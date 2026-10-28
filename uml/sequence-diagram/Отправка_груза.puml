@@ -10,13 +10,21 @@ participant "Веб-клиент" as Client
 participant "HTTP API" as API
 participant "Cargo use cases" as Cargo
 participant "Routing" as Routing
+participant "Infrastructure" as Infrastructure
+participant "Identity" as Identity
 database "База данных" as DB
 
-User -> Client : Ввести данные груза и станции
+User -> Client : Выбрать станции, получателя\nи ввести описание с весом
 Client -> API : CreateCargoCommand
 API -> Cargo : Создать отправление
-Cargo -> Routing : Проверить маршрут
-Routing --> Cargo : Маршрут доступен
+Cargo -> Routing : CanTravel(origin, destination)
+Routing -> Infrastructure : Найти прямое сообщение
+Infrastructure --> Routing : Поезд найден / не найден
+Routing --> Cargo : Результат проверки
+Cargo -> Identity : Проверить получателя
+Identity --> Cargo : User найден
+Cargo -> Identity : Получить sender_id из сессии
+Identity --> Cargo : Подтверждённый sender_id
 Cargo -> DB : Сохранить Cargo
 DB --> Cargo : cargo_id
 Cargo --> API : CargoDto

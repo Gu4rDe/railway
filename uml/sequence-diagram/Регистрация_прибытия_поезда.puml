@@ -1,0 +1,32 @@
+@startuml
+title Последовательность: регистрация прибытия поезда
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Оператор станции" as Operator
+participant "Веб-клиент" as Client
+participant "HTTP API" as API
+participant "Infrastructure use cases" as Infrastructure
+participant "Identity" as Identity
+database "База данных" as DB
+
+Operator -> Client : Выбрать прибывший поезд
+Client -> API : RegisterTrainArrivalCommand(train_id)
+API -> Infrastructure : Зарегистрировать прибытие
+Infrastructure -> Identity : Получить station_id оператора
+Identity --> Infrastructure : station_id
+Infrastructure -> DB : Найти поезд и проверить destination_station_id
+DB --> Infrastructure : Train
+alt конечная станция совпадает
+  Infrastructure -> DB : Сохранить статус arrived
+  DB --> Infrastructure : TrainDto
+  Infrastructure --> API : Подтверждение прибытия
+  API --> Client : Показать подтверждение
+else чужая станция или поезд уже прибыл
+  Infrastructure --> API : Forbidden / Conflict
+  API --> Client : Показать ошибку
+end
+Client --> Operator : Результат операции
+@enduml

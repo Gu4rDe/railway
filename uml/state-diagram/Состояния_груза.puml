@@ -8,6 +8,7 @@ hide empty description
 state "Ожидает приёма" as Awaiting
 state "Принят на станции" as Accepted
 state "В пути" as InTransit
+state "Доступен к выдаче" as Available
 state "Получен" as Collected
 
 [*] --> Awaiting : создана заявка
@@ -15,7 +16,8 @@ Awaiting --> Accepted : оператор принял груз
 Awaiting --> Awaiting : ошибка данных / повторить
 Accepted --> InTransit : назначен поезд
 Accepted --> Accepted : поезд не найден / ожидание
-InTransit --> Collected : поезд прибыл и груз выдан
+InTransit --> Available : оператор выгрузил груз после прибытия поезда
 InTransit --> InTransit : поезд ещё не прибыл / ожидание
+Available --> Collected : получатель подтвердил выдачу
 Collected --> [*]
 @enduml

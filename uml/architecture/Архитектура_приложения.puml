@@ -17,7 +17,7 @@ package "railway/frontend\nTypeScript + React" as frontend {
     [Identity]
     [Infrastructure]
     [Cargo]
-    [Tracking]
+    [Tracking] as TrackingFeature
   }
   [API client]
 }
@@ -31,7 +31,6 @@ package "railway/backend\nPython web service" as backend {
     [Identity use cases]
     [Infrastructure use cases]
     [Cargo use cases]
-    [Tracking use cases]
   }
 
   package "Domain" {
@@ -50,18 +49,20 @@ package "railway/backend\nPython web service" as backend {
 database "Database" as db
 
 frontend --> [API client]
+[Identity] --> [API client]
+[Infrastructure] --> [API client]
+[Cargo] --> [API client]
+TrackingFeature --> [API client]
 [API client] --> [HTTP API]
 [HTTP API] --> [Identity use cases]
 [HTTP API] --> [Infrastructure use cases]
 [HTTP API] --> [Cargo use cases]
-[HTTP API] --> [Tracking use cases]
 
 [Identity use cases] --> [Identity domain]
 [Infrastructure use cases] --> [Infrastructure domain]
 [Infrastructure use cases] --> [Routing domain]
 [Cargo use cases] --> [Cargo domain]
 [Cargo use cases] --> [Routing domain]
-[Tracking use cases] --> [Cargo domain]
 
 [Database adapters] ..> [Identity use cases] : реализует порты
 [Database adapters] ..> [Infrastructure use cases] : реализует порты
@@ -71,8 +72,13 @@ frontend --> [API client]
 
 note right of [Cargo domain]
 CargoStatus:
-ожидает приёма -> принят
-на станции -> в пути -> получен
+ожидает приёма -> принят на станции
+-> в пути -> доступен к выдаче -> получен
+end note
+
+note bottom of [Cargo use cases]
+TrackCargo belongs to Cargo.
+Tracking is a frontend feature only.
 end note
 
 @enduml

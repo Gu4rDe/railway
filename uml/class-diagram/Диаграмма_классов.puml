@@ -1,81 +1,70 @@
 @startuml
-title Class Diagram of the "Railway" System
+title Классы и роли системы «Железная дорога»
 
 left to right direction
-skinparam linetype ortho
 skinparam classAttributeIconSize 0
-skinparam nodesep 70
+skinparam nodesep 80
 skinparam ranksep 90
-skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam defaultFontName Arial
 skinparam ArrowColor #344054
 skinparam ClassBorderColor #2F5D8A
 skinparam ClassBackgroundColor #FFFFFF
-skinparam PackageBorderColor #455468
-skinparam PackageBackgroundColor #F7F9FC
+hide empty members
 
-package "System Users" {
-  abstract class User {
-    - identifier: String
-    - password: String
-    - name: String
-    + login(identifier, password): boolean
-    + logout(): void
-  }
-
-  class Administrator {
-    + addStation(station): void
-    + removeStation(station): void
-    + addOperator(operator): void
-    + removeOperator(operator): void
-    + addTrain(train): void
-    + removeTrain(train): void
-  }
-
-  class Operator {
-    + receiveCargo(cargo): void
-    + assignCargo(cargo, train): void
-    + collectCargo(cargoId): void
-  }
+abstract class User {
+  - identifier: String
+  - passwordHash: String
+  - name: String
 }
 
-package "Railway System" {
-  class Station {
-    - code: String
-    - name: String
-    + addOperator(operator): void
-    + removeOperator(operator): void
-  }
+class Administrator {
+  + createUser(name): UserCredentials
+  + manageInfrastructure(): void
+}
 
-  class Train {
-    - number: String
-    - status: TrainStatus
-    + goesTo(station): boolean
-    + addStation(station): void
-  }
+class Operator {
+  + listStationCargo(status): List<Cargo>
+  + acceptCargo(cargoId): void
+  + assignCargo(cargoId, train): void
+  + registerTrainArrival(trainId): void
+  + unloadCargo(cargoId): void
+}
 
-  class Route {
-    - stations: List<Station>
-    + contains(station): boolean
-    + nextStation(station): Station
-  }
+class Customer {
+  + createShipment(cargo): Cargo
+  + trackCargo(cargoId): CargoStatus
+  + confirmPickup(cargoId): void
+}
 
-  class Cargo {
-    - identifier: String
-    - description: String
-    - weight: Decimal
-    - status: CargoStatus
-    + accept(): void
-    + dispatch(train): void
-    + collect(): void
-  }
+class Station {
+  - code: String
+  - name: String
+}
+
+class Train {
+  - number: String
+  - status: TrainStatus
+  + serves(origin, destination): boolean
+  + registerArrival(): void
+}
+
+class Cargo {
+  - identifier: String
+  - description: String
+  - weight: Decimal
+  - status: CargoStatus
+  + accept(): void
+  + dispatch(train): void
+  + unload(): void
+  + collect(): void
 }
 
 enum CargoStatus {
   AWAITING_ACCEPTANCE
   ACCEPTED_AT_STATION
   IN_TRANSIT
+  AVAILABLE_FOR_PICKUP
   COLLECTED
 }
 
@@ -85,24 +74,20 @@ enum TrainStatus {
   ARRIVED
 }
 
-User <|-- Administrator
-User <|-- Operator
+Administrator -up-|> User
+Operator -up-|> User
+Customer -up-|> User
 
-Station "1" o-- "0..*" Operator : employs
-Train "1" *-- "1" Route : has
-Route "1" o-- "2..*" Station : passes through
+Station "1" <-- "0..*" Operator : station
+Train "0..*" --> "1" Station : origin
+Train "0..*" --> "1" Station : destination
+Cargo "0..*" --> "1" Station : origin
+Cargo "0..*" --> "1" Station : destination
+Cargo "0..*" --> "0..1" Train : assigned train
+Cargo "0..*" --> "1" Customer : sender
+Cargo "0..*" --> "1" Customer : recipient
 
-User "1" -- "0..*" Cargo : sender
-Cargo "0..*" --> "1" Station : origin station
-Cargo "0..*" --> "1" Station : destination station
-Cargo "0..*" --> "0..1" Train : assigned to
-
-Train --> TrainStatus
-Cargo --> CargoStatus
-
-Administrator ..> Station : manages
-Administrator ..> Operator : manages
-Administrator ..> Train : manages
-Operator ..> Cargo : processes
+Train ..> TrainStatus
+Cargo ..> CargoStatus
 
 @enduml

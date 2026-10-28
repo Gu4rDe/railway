@@ -1,0 +1,31 @@
+@startuml
+title Последовательность: подтверждение получения груза
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Получатель" as Recipient
+participant "Веб-клиент" as Client
+participant "HTTP API" as API
+participant "Cargo use cases" as Cargo
+participant "Identity" as Identity
+database "База данных" as DB
+
+Recipient -> Client : Подтвердить выдачу груза
+Client -> API : ConfirmCargoPickupCommand(cargo_id)
+API -> Cargo : Подтвердить получение
+Cargo -> Identity : Получить user_id текущей сессии
+Identity --> Cargo : user_id
+Cargo -> DB : Найти груз и recipient_id
+DB --> Cargo : Cargo
+alt получатель назначен и статус available_for_pickup
+  Cargo -> DB : Сохранить статус collected
+  Cargo --> API : CargoDto
+  API --> Client : Подтверждение получения
+else чужой груз или неверный статус
+  Cargo --> API : Forbidden / Conflict
+  API --> Client : Показать ошибку
+end
+Client --> Recipient : Результат операции
+@enduml

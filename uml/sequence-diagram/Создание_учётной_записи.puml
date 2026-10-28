@@ -1,0 +1,25 @@
+@startuml
+title Последовательность: создание учётной записи пользователя
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Администратор" as Admin
+participant "Веб-клиент" as Client
+participant "HTTP API" as API
+participant "Identity use cases" as Identity
+participant "Credential generator" as Generator
+database "База данных" as DB
+
+Admin -> Client : Создать учётную запись по имени
+Client -> API : CreateUserCommand(name)
+API -> Identity : Создать пользователя
+Identity -> Generator : Создать идентификатор и временный пароль
+Generator --> Identity : Учётные данные
+Identity -> DB : Сохранить пользователя и хэш пароля
+DB --> Identity : User
+Identity --> API : UserCredentialsDto
+API --> Client : Показать временные учётные данные
+Client --> Admin : Подтверждение
+@enduml

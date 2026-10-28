@@ -1,5 +1,5 @@
 @startuml
-title Последовательность: получение груза
+title Последовательность: выгрузка груза на станции назначения
 skinparam shadowing false
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
@@ -12,19 +12,21 @@ participant "Cargo use cases" as Cargo
 participant "Routing" as Routing
 database "База данных" as DB
 
-Operator -> Client : Ввести идентификатор прибывшего груза
-Client -> API : CollectCargoCommand
-API -> Cargo : Получить груз
-Cargo -> DB : Найти груз и поезд
-DB --> Cargo : Данные отправления
-Cargo -> Routing : Проверить прибытие поезда
-alt поезд прибыл
-  Routing --> Cargo : Прибыл
-  Cargo -> DB : Сохранить статус collected
+Operator -> Client : Выбрать груз «в пути»
+Client -> API : UnloadCargoCommand(cargo_id)
+API -> Cargo : Выгрузить груз
+Cargo -> Identity : Получить station_id оператора
+Identity --> Cargo : station_id
+Cargo -> DB : Проверить станцию назначения и поезд
+DB --> Cargo : Cargo и Train
+Cargo -> Infrastructure : Проверить статус поезда arrived
+alt поезд прибыл на станцию назначения
+  Infrastructure --> Cargo : Прибыл
+  Cargo -> DB : Сохранить статус available_for_pickup
   Cargo --> API : CargoDto
-  API --> Client : Подтверждение выдачи
-else поезд не прибыл
-  Routing --> Cargo : Ещё в пути
+  API --> Client : Груз доступен получателю
+else поезд не прибыл или станция чужая
+  Infrastructure --> Cargo : Проверка не пройдена
   Cargo --> API : ValidationError
   API --> Client : Показать ошибку
 end

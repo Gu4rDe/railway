@@ -11,17 +11,19 @@ participant "HTTP API" as API
 participant "Cargo use cases" as Cargo
 database "База данных" as DB
 
-Operator -> Client : Ввести идентификатор и данные груза
-Client -> API : AcceptCargoCommand
+Operator -> Client : Выбрать заявку «ожидает приёма»
+Client -> API : AcceptCargoCommand(cargo_id)
 API -> Cargo : Принять груз
-Cargo -> DB : Найти пользователя и груз
-DB --> Cargo : Данные отправления
-alt данные корректны
+Cargo -> Identity : Получить станцию оператора
+Identity --> Cargo : station_id
+Cargo -> DB : Найти заявку и проверить origin_station_id
+DB --> Cargo : Существующая заявка
+alt заявка относится к станции оператора
   Cargo -> DB : Сохранить статус accepted_at_station
   Cargo --> API : CargoDto
   API --> Client : Подтверждение приёма
-else ошибка данных
-  Cargo --> API : ValidationError
+else заявка неизвестна или чужая
+  Cargo --> API : NotFound / Forbidden / Conflict
   API --> Client : Показать ошибку
 end
 Client --> Operator : Результат операции
